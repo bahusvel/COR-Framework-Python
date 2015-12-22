@@ -17,7 +17,7 @@ def id_generator():
 
 class CORModule:
 
-	def __init__(self, network_adapter=comm.CallbackNetworkAdapter, mid=None, *args, **kwargs):
+	def __init__(self, network_adapter=cor.comm.CallbackNetworkAdapter, mid=None, *args, **kwargs):
 		if mid is None:
 			mid = id_generator()
 		self.mid = mid
