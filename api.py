@@ -3,7 +3,7 @@ import time
 __author__ = 'denislavrov'
 import random
 import struct
-import comm
+import cor.comm
 """
 If you want to port COR-Module to another language, you must implement everything in this module in the language.
 

@@ -1,7 +1,7 @@
 __author__ = 'denislavrov'
 
-from api import Message, CORModule
-import comm
+from cor.api import Message, CORModule
+import cor.comm
 import struct
 
 try:
@@ -76,7 +76,7 @@ class Manager(CORModule):
 			self.connect_to_manager(parent)
 			self.advertise_topics()
 
-	def __init__(self, network_adapter=comm.CallbackNetworkAdapter, parent=None, **kwargs):
+	def __init__(self, network_adapter=cor.comm.CallbackNetworkAdapter, parent=None, **kwargs):
 		CORModule.__init__(self, **kwargs)
 		self.poller = network_adapter(self, **kwargs)
 		self.consumes.update({"TOPIC_ADVERTISEMENT": self.topic_advertisement})

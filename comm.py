@@ -5,7 +5,7 @@ import os
 import msgpack
 import threading
 import time
-import api
+import cor.api
 
 
 def dst_router_factory(default_route):
@@ -121,7 +121,7 @@ class SocketModuleNetworkAdapter(NetworkAdapter):
 				continue
 			unpacker.feed(buf)
 			for unpacked in unpacker:
-				msg = api.Message(None, None)
+				msg = cor.api.Message(None, None)
 				msg.__dict__.update(unpacked)
 				self.message_callback(msg)
 
@@ -145,7 +145,7 @@ class SocketManagerNetworkAdapter(NetworkAdapter):
 				continue
 			unpacker.feed(buf)
 			for unpacked in unpacker:
-				msg = api.Message(None, None)
+				msg = cor.api.Message(None, None)
 				msg.__dict__.update(unpacked)
 				self.clients[SocketManagerNetworkAdapter.ipid(msg.source)] = conn
 				#print("Manager Received: " + str(msg))
