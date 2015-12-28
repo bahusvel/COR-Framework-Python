@@ -1,5 +1,5 @@
 __author__ = 'denis'
-from cor.api import CORModule
+from .api import CORModule
 import logging
 import re
 

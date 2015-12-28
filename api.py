@@ -3,7 +3,7 @@ import time
 __author__ = 'denislavrov'
 import random
 import struct
-import cor.comm
+
 """
 If you want to port COR-Module to another language, you must implement everything in this module in the language.
 
@@ -17,12 +17,15 @@ def id_generator():
 
 class CORModule:
 
-	def __init__(self, network_adapter=cor.comm.CallbackNetworkAdapter, mid=None, *args, **kwargs):
+	def __init__(self, network_adapter=None, mid=None, *args, **kwargs):
 		if mid is None:
 			mid = id_generator()
 		self.mid = mid
 		self.produces = []
 		self.consumes = {}
+		if network_adapter is None:
+			from cor.comm import CallbackNetworkAdapter
+			network_adapter = CallbackNetworkAdapter
 		self.network_adapter = network_adapter(self, **kwargs)
 		print("Initializaing %s %s" % (type(self).__name__, self.mid))
 
