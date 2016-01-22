@@ -38,10 +38,28 @@ class CORModule:
 
 
 class Type:
-	def __init__(self, name, subtypes=None):
+
+	@staticmethod
+	def __convertable__(from_type, to_type):
+		return to_type in from_type.to_table or from_type in to_type.from_table
+
+	@staticmethod
+	def convert(from_type, to_type):
+		if not Type.__convertable__(from_type, to_type):
+			raise TypeError("Cannot convert " + from_type + " to " + to_type)
+
+	def check(self, data):
+		return False
+
+	def __init__(self, name, namespace="COR"):
 		super().__init__()
 		self.name = name
-		self.extends = subtypes
+		self.namespace = namespace
+		self.to_table = set()
+		self.from_table = set()
+
+	def __str__(self):
+		return self.namespace + "." + self.name
 
 
 class Message:
