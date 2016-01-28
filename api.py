@@ -31,6 +31,11 @@ class CORModule:
 	def messagein(self, message):
 		if message.atype in self.consumes:
 			self.consumes[message.atype](message)
+		else:
+			if "UNSOLICITED" in self.consumes:
+				self.consumes["UNSOLICITED"](message)
+		if "ANY" in self.consumes:
+			self.consumes["ANY"](message)
 
 	# Responsible for dynamic linkage across different communication domains
 	def pong(self, ping):
