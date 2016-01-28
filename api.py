@@ -22,6 +22,7 @@ class CORModule:
 			self.network_adapter = CallbackNetworkAdapter(self)
 		else:
 			self.network_adapter = network_adapter
+		self.consumes["PING"] = self.pong
 		print("Initializaing %s" % type(self).__name__)
 
 	def add_topics(self, topics):
@@ -30,6 +31,10 @@ class CORModule:
 	def messagein(self, message):
 		if message.atype in self.consumes:
 			self.consumes[message.atype](message)
+
+	# Responsible for dynamic linkage across different communication domains
+	def pong(self, ping):
+		self.messageout(Message("PONG", {"moduleID": getattr(self, "moduleID"), "in": list(self.consumes.keys())}))
 
 	def messageout(self, message, sync=False, timeout=None):
 		while self.network_adapter is None:
