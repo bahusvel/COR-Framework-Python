@@ -1,0 +1,6 @@
+[submodule "COR-Framework"]
+	path = COR-Framework
+	url = https://github.com/bahusvel/COR-Framework
+[submodule "framework"]
+	path = framework
+	url = https://github.com/bahusvel/COR-Framework.git
