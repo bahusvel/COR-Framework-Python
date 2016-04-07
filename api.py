@@ -1,6 +1,5 @@
 import time
 
-
 __author__ = 'denislavrov'
 
 """
@@ -42,3 +41,4 @@ class CORModule:
 		while self.network_adapter is None:
 			time.sleep(0.01)
 		self.network_adapter.message_out(message)
+
