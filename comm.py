@@ -1,6 +1,11 @@
 __author__ = 'denis'
 
 
+"""
+If you want to port COR-Module to another language, you must implement everything in this file in your target language.
+"""
+
+
 class NetworkAdapter:
 
 	def message_out(self, message):
