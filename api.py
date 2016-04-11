@@ -14,6 +14,7 @@ If you want to port COR-Module to another language, you must implement everythin
 class CORModule:
 	def __init__(self, network_adapter=None, *args, **kwargs):
 		self.consumes = {}
+		self.types = {}
 		if network_adapter is None:
 			from .comm import CallbackNetworkAdapter
 			self.network_adapter = CallbackNetworkAdapter()
@@ -25,6 +26,9 @@ class CORModule:
 
 	def add_topic(self, type, callback):
 		self.consumes[type] = callback
+
+	def register_type(self, type, type_class):
+		self.types[type] = type_class
 
 	def messagein(self, message):
 		if type(message).__name__ in self.consumes:

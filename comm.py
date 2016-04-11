@@ -73,6 +73,8 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 			print("Connected to " + hostport)
 			self.endpoints[hostport] = client_socket
 			self.routes[atype] = client_socket
+		else:
+			self.routes[atype] = self.endpoints[hostport]
 
 	def server_thread(self):
 		self.server_socket.listen(10)
@@ -94,7 +96,13 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 			cormsg = CORMessage()
 			cormsg.ParseFromString(fullmessage)
 			print("Received: " + cormsg.type)
-			#self.message_callback(cormsg.data)
+			# type parse
+			if cormsg.type in self.module.types:
+				msg_instance = self.module.types[cormsg.type]()
+				msg_instance.ParseFromString(cormsg.data)
+				self.module.messagein(msg_instance)
+			else:
+				print("Type " + cormsg.type + " is not declared to be received")
 
 	def __init__(self, hostport="127.0.0.1:6090"):
 		super().__init__()
