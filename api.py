@@ -109,7 +109,7 @@ def app_loader(loader_id, config_file):
 			if link["LinkType"] == "Internal":
 				for target in link["Targets"]:
 					module_launcher.link_internal(link["MessageType"], launchers[target])
-
+	print("App Initialized")
 
 if __name__ == "__main__":
 	if len(sys.argv) == 3:
