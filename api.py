@@ -16,9 +16,10 @@ class CORModule:
 		self.consumes = {}
 		if network_adapter is None:
 			from .comm import CallbackNetworkAdapter
-			self.network_adapter = CallbackNetworkAdapter(self)
+			self.network_adapter = CallbackNetworkAdapter()
 		else:
 			self.network_adapter = network_adapter
+		network_adapter.module = self
 		self.consumes["PING"] = self.pong
 		print("Initializaing %s" % type(self).__name__)
 
@@ -66,6 +67,14 @@ class Launcher:
 		self.wait_for_instance()
 		other_loader.wait_for_instance()
 		self.module_instance.network_adapter.register_callback(messagetype, other_loader.module_instance)
+
+	def link_external(self, messagetype, hostport):
+		self.wait_for_instance()
+		network_adapter = self.module_instance.network_adapter
+		if type(network_adapter).__name__ == "TCPSocketNetworkAdapter":
+			network_adapter.register_link(messagetype, hostport)
+		else:
+			print("Can Not Link")
 
 
 def packaged_import(name):

@@ -12,16 +12,18 @@ class NetworkAdapter:
 	def message_out(self, message):
 		pass
 
-	def __init__(self, module):
-		super().__init__()
+	def set_module(self, module):
 		self.module = module
-		self.message_callback = module.messagein
+
+	def __init__(self):
+		super().__init__()
+		self.module = None
 
 
 class CallbackNetworkAdapter(NetworkAdapter):
 
 	def handle(self, message):
-		self.message_callback(message)
+		self.module.messagein(message)
 
 	def message_out(self, message):
 		super().message_out(message)
@@ -41,8 +43,8 @@ class CallbackNetworkAdapter(NetworkAdapter):
 			else:
 				raise Exception(str(module) + " does not use CallbackNetworkAdapter, cannot register callback!")
 
-	def __init__(self, module):
-		super().__init__(module)
+	def __init__(self):
+		super().__init__()
 		self.callbacks = {}
 
 
@@ -61,12 +63,14 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 			sock.send(cordata)
 		else:
 			print("Route not found")
+			pass
 
 	def register_link(self, atype, hostport):
 		if hostport not in self.endpoints:
 			aparts = hostport.split(":")
 			client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			client_socket.connect((aparts[0], int(aparts[1])))
+			print("Connected to " + hostport)
 			self.endpoints[hostport] = client_socket
 			self.routes[atype] = client_socket
 
@@ -79,20 +83,26 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 
 	def client_thread(self, conn):
 		while True:
-			buf = conn.recv(4096)
-			if not buf:
+			lenbuf = conn.recv(4)
+			if not lenbuf:
 				time.sleep(0.0001)
 				continue
-			unpacker.feed(buf)
+			msglen = struct.unpack("I", lenbuf)[0]
+			fullmessage = b""
+			while len(fullmessage) < msglen:
+				fullmessage += conn.recv(4096)
+			cormsg = CORMessage()
+			cormsg.ParseFromString(fullmessage)
+			print("Received: " + cormsg.type)
+			#self.message_callback(cormsg.data)
 
-
-	def __init__(self, module, hostport="127.0.0.1:6090"):
-		super().__init__(module)
+	def __init__(self, hostport="127.0.0.1:6090"):
+		super().__init__()
 		self.endpoints = {}
 		self.routes = {}
 		self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		aparts = hostport.split(":")
 		self.server_socket.bind((aparts[0], int(aparts[1])))
-		self.sthread = threading.Thread(target=self.server_socket)
+		self.sthread = threading.Thread(target=self.server_thread)
 		self.sthread.start()
 
