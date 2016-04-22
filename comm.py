@@ -56,25 +56,38 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 		cormsg.type = message_type
 		cormsg.data = message.SerializeToString()
 		if message_type in self.routes:
-			sock = self.routes[message_type]
+			sock = self.endpoints[self.routes[message_type]]
 			cordata = cormsg.SerializeToString()
-			corlength = struct.pack("I", len(cordata))
-			sock.send(corlength)
-			sock.send(cordata)
+			corlength = struct.pack(">I", len(cordata))
+			try:
+				sock.send(corlength+cordata)
+			except Exception:
+				print("Unable to send message, attempting to reconnect")
+				self._connect(self.routes[message_type])
+				self.message_out(message)
 		else:
 			print("Route not found")
 			pass
 
+	def _connect(self, hostport):
+		aparts = hostport.split(":")
+		if hostport in self.endpoints:
+			self.endpoints[hostport].close()
+		try:
+			sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			sock.connect((aparts[0], int(aparts[1])))
+			self.endpoints[hostport] = sock
+		except Exception as e:
+			print(e)
+			print("Connection to %s failed retrying" % hostport)
+			time.sleep(1)
+			self._connect(hostport)
+		print("Connected to " + hostport)
+
 	def register_link(self, atype, hostport):
 		if hostport not in self.endpoints:
-			aparts = hostport.split(":")
-			client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			client_socket.connect((aparts[0], int(aparts[1])))
-			print("Connected to " + hostport)
-			self.endpoints[hostport] = client_socket
-			self.routes[atype] = client_socket
-		else:
-			self.routes[atype] = self.endpoints[hostport]
+			self._connect(hostport)
+		self.routes[atype] = hostport
 
 	def server_thread(self):
 		self.server_socket.listen(10)
@@ -89,7 +102,7 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 			if not lenbuf:
 				time.sleep(0.0001)
 				continue
-			msglen = struct.unpack("I", lenbuf)[0]
+			msglen = struct.unpack(">I", lenbuf)[0]
 			fullmessage = b""
 			while len(fullmessage) < msglen:
 				fullmessage += conn.recv(4096)
