@@ -21,7 +21,6 @@ class CORModule:
 		else:
 			self.network_adapter = network_adapter
 		network_adapter.module = self
-		self.consumes["PING"] = self.pong
 		print("Initializaing %s" % type(self).__name__)
 
 	def add_topic(self, type, callback):
@@ -38,11 +37,6 @@ class CORModule:
 				self.consumes["UNSOLICITED"](message)
 		if "ANY" in self.consumes:
 			self.consumes["ANY"](message)
-
-	# Responsible for dynamic linkage across different communication domains
-	def pong(self, ping):
-		# self.messageout(Message("PONG", {"moduleID": getattr(self, "moduleID"), "in": list(self.consumes.keys())}))
-		pass
 
 	def messageout(self, message):
 		while self.network_adapter is None:
