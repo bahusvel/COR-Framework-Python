@@ -77,6 +77,9 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 			try:
 				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 				sock.connect((aparts[0], int(aparts[1])))
+				if self.nodelay:
+					# Disables Nagle's Algorithm to reduce latency
+					sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 				self.endpoints[hostport] = sock
 				print("Connected to " + hostport)
 				break
@@ -125,8 +128,9 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 			else:
 				print("Type " + cormsg.type + " is not declared to be received")
 
-	def __init__(self, hostport="127.0.0.1:6090"):
+	def __init__(self, hostport="127.0.0.1:6090", nodelay=True):
 		super().__init__()
+		self.nodelay = nodelay
 		self.endpoints = {}
 		self.routes = {}
 		self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
