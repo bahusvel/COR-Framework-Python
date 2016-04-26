@@ -105,7 +105,8 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 			msglen = struct.unpack(">I", lenbuf)[0]
 			fullmessage = b""
 			while len(fullmessage) < msglen:
-				fullmessage += conn.recv(4096)
+				rcv_buf_size = 8192 if (msglen - len(fullmessage)) > 8192 else (msglen - len(fullmessage))
+				fullmessage += conn.recv(rcv_buf_size)
 			cormsg = CORMessage()
 			try:
 				cormsg.ParseFromString(fullmessage)
