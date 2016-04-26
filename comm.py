@@ -73,16 +73,18 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 		aparts = hostport.split(":")
 		if hostport in self.endpoints:
 			self.endpoints[hostport].close()
-		try:
-			sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			sock.connect((aparts[0], int(aparts[1])))
-			self.endpoints[hostport] = sock
-		except Exception as e:
-			print(e)
-			print("Connection to %s failed retrying" % hostport)
-			time.sleep(1)
-			self._connect(hostport)
-		print("Connected to " + hostport)
+		while True: 
+			try:
+				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				sock.connect((aparts[0], int(aparts[1])))
+				self.endpoints[hostport] = sock
+				print("Connected to " + hostport)
+				break
+			except Exception as e:
+				print(e)
+				print("Connection to %s failed retrying" % hostport)
+				time.sleep(1)
+		
 
 	def register_link(self, atype, hostport):
 		if hostport not in self.endpoints:
