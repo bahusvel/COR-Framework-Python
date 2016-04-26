@@ -134,6 +134,8 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 		self.endpoints = {}
 		self.routes = {}
 		self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		# allow to reuse the address (in case of server crash and quick restart)
+		self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		aparts = hostport.split(":")
 		self.server_socket.bind((aparts[0], int(aparts[1])))
 		self.sthread = threading.Thread(target=self.server_thread)
