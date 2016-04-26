@@ -111,8 +111,9 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 				cormsg.ParseFromString(fullmessage)
 				print("Received: " + cormsg.type)
 			except Exception:
-				print("Received a corrupt message")
-				continue
+				print("Received a corrupt message, reseting connection")
+				conn.close()
+				return
 			# type parse
 			if cormsg.type in self.module.types:
 				msg_instance = self.module.types[cormsg.type]()
