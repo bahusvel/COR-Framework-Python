@@ -87,7 +87,6 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 				print(e)
 				print("Connection to %s failed retrying" % hostport)
 				time.sleep(1)
-		
 
 	def register_link(self, atype, hostport):
 		if hostport not in self.endpoints:
