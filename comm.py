@@ -10,47 +10,6 @@ If you want to port COR-Module to another language, you must implement everythin
 class NetworkAdapter:
 
 	def message_out(self, message):
-		pass
-
-	def set_module(self, module):
-		self.module = module
-
-	def __init__(self):
-		super().__init__()
-		self.module = None
-
-
-class CallbackNetworkAdapter(NetworkAdapter):
-
-	def handle(self, message):
-		self.module.messagein(message)
-
-	def message_out(self, message):
-		super().message_out(message)
-		if type(message).__name__ in self.callbacks:
-			for callback in self.callbacks[type(message).__name__]:
-				callback(message)
-
-	def register_callback(self, atype, modules):
-		if type(modules) is not list:
-			modules = [modules]
-		for module in modules:
-			if type(module.network_adapter) == CallbackNetworkAdapter:
-				if atype in self.callbacks:
-					self.callbacks[atype].append(module.network_adapter.handle)
-				else:
-					self.callbacks[atype] = [module.network_adapter.handle]
-			else:
-				raise Exception(str(module) + " does not use CallbackNetworkAdapter, cannot register callback!")
-
-	def __init__(self):
-		super().__init__()
-		self.callbacks = {}
-
-
-class TCPSocketNetworkAdapter(NetworkAdapter):
-
-	def message_out(self, message):
 		message_type = type(message).__name__
 		cormsg = CORMessage()
 		cormsg.type = message_type
@@ -68,6 +27,10 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 		else:
 			print("Route not found")
 			pass
+
+	# COR 5.0, direct message extension
+	def direct_message(self, message, url):
+		pass
 
 	def _connect(self, hostport):
 		aparts = hostport.split(":")
@@ -127,15 +90,16 @@ class TCPSocketNetworkAdapter(NetworkAdapter):
 			else:
 				print("Type " + cormsg.type + " is not declared to be received")
 
-	def __init__(self, hostport="127.0.0.1:6090", nodelay=True):
+	def __init__(self, module, local_socket="", bind_url="127.0.0.1:6090", nodelay=True):
 		super().__init__()
 		self.nodelay = nodelay
 		self.endpoints = {}
+		self.module = module
 		self.routes = {}
 		self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		# allow to reuse the address (in case of server crash and quick restart)
 		self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		aparts = hostport.split(":")
+		aparts = bind_url.split(":")
 		self.server_socket.bind((aparts[0], int(aparts[1])))
 		self.sthread = threading.Thread(target=self.server_thread)
 		self.sthread.start()

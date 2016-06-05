@@ -1,8 +1,7 @@
 import time
 import threading
-import json
 import sys
-import os
+from . import comm
 
 __author__ = 'denislavrov'
 
@@ -12,19 +11,29 @@ If you want to port COR-Module to another language, you must implement everythin
 
 
 class CORModule:
-	def __init__(self, network_adapter=None, *args, **kwargs):
+	def __init__(self, local_socket, bind_url):
 		self.consumes = {}
 		self.types = {}
-		if network_adapter is None:
-			from .comm import CallbackNetworkAdapter
-			self.network_adapter = CallbackNetworkAdapter()
-		else:
-			self.network_adapter = network_adapter
-		network_adapter.module = self
+		self.network_adapter = comm.NetworkAdapter(self, local_socket=local_socket, bind_url=bind_url)
 		print("Initializaing %s" % type(self).__name__)
 
 	def add_topic(self, type, callback):
 		self.consumes[type] = callback
+
+	def on_parameters_received(self, message):
+		pass
+
+	def on_start(self, message):
+		pass
+
+	def on_stop(self, message):
+		exit(0)
+
+	def on_connection_request(self, message):
+		self.network_adapter.register_link(message.type, message.corurl)
+
+	def on_recover(self, message):
+		self.on_start(message)
 
 	def register_type(self, type, type_class):
 		self.types[type] = type_class
@@ -39,37 +48,19 @@ class CORModule:
 			self.consumes["ANY"](message)
 
 	def messageout(self, message):
-		while self.network_adapter is None:
-			time.sleep(0.01)
 		self.network_adapter.message_out(message)
 
+	# COR 5.0, direct message extension
+	def direct_message(self, message, url):
+		self.network_adapter.direct_message(message, url)
 
-class Launcher:
-	def __init__(self):
-		super().__init__()
-		self.module_thread = None
-		self.module_instance = None
 
-	def launch_module(self, module_class, *mod_args, **mod_kwargs):
-		def mod_loader():
-			self.module_instance = module_class(*mod_args, **mod_kwargs)
+# Call this in main method of the file, to launch a supervised module
+def launch_module(module_class):
+	local_socket = sys.argv[1]
+	bind_url = sys.argv[2]
 
-		self.module_thread = threading.Thread(target=mod_loader)
-		self.module_thread.start()
-
-	def wait_for_instance(self):
-		while self.module_instance is None:
-			time.sleep(0.5)
-
-	def link_internal(self, messagetype, other_loader):
-		self.wait_for_instance()
-		other_loader.wait_for_instance()
-		self.module_instance.network_adapter.register_callback(messagetype, other_loader.module_instance)
-
-	def link_external(self, messagetype, hostport):
-		self.wait_for_instance()
-		network_adapter = self.module_instance.network_adapter
-		if type(network_adapter).__name__ == "TCPSocketNetworkAdapter":
-			network_adapter.register_link(messagetype, hostport)
-		else:
-			print("Can Not Link")
+	def mod_loader():
+		smodule_instance = module_class(local_socket, bind_url)
+	module_thread = threading.Thread(target=mod_loader)
+	module_thread.start()
