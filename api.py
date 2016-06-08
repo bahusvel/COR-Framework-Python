@@ -2,7 +2,8 @@ import time
 import threading
 import sys
 from . import comm
-import protocol.lifecycle_pb2 as lifecycle
+from .protocol import lifecycle_pb2 as lifecycle
+from .protocol import log_pb2 as log
 
 __author__ = 'denislavrov'
 
@@ -21,6 +22,7 @@ class CORModule:
 		self.register_topic("ModuleStop", lifecycle.ModuleStop, self.on_stop)
 		self.register_topic("ModuleRecover", lifecycle.ModuleRecover, self.on_recover)
 		self.register_topic("ModuleParameters", lifecycle.ModuleParameters, self.on_parameters_received)
+		self.register_type("Log", log.Log)
 		print("Initializaing %s" % type(self).__name__)
 
 	def add_topic(self, type, callback):
@@ -63,6 +65,12 @@ class CORModule:
 	# COR 5.0, direct message extension
 	def direct_message(self, message, url):
 		self.network_adapter.direct_message(message, url)
+
+	def log(self, text, level="INFO"):
+		log_message = log.Log()
+		log_message.level = level
+		log_message.text = text
+		self.messageout(log_message)
 
 
 # Call this in main method of the file, to launch a supervised module
