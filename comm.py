@@ -26,6 +26,7 @@ class NetworkAdapter:
 				self.message_out(message)
 		else:
 			print("Route not found")
+			print(self.routes)
 			pass
 
 	# COR 5.0, direct message extension
@@ -105,7 +106,7 @@ class NetworkAdapter:
 			cormsg = CORMessage()
 			try:
 				cormsg.ParseFromString(fullmessage)
-				print("Received: " + cormsg.type)
+				#print("Received: " + cormsg.type)
 			except Exception:
 				print("Received a corrupt message, reseting connection")
 				conn.close()

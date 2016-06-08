@@ -16,7 +16,7 @@ class CORModule:
 		self.consumes = {}
 		self.types = {}
 		self.network_adapter = comm.NetworkAdapter(self, local_socket=local_socket, bind_url=bind_url)
-		self.register_topic("Connnection", lifecycle.Connection, self.on_connection_request)
+		self.register_topic("Connection", lifecycle.Connection, self.on_connection_request)
 		self.register_topic("ModuleStart", lifecycle.ModuleStart, self.on_start)
 		self.register_topic("ModuleStop", lifecycle.ModuleStop, self.on_stop)
 		self.register_topic("ModuleRecover", lifecycle.ModuleRecover, self.on_recover)
