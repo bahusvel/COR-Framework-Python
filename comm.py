@@ -1,5 +1,5 @@
 __author__ = 'denis'
-import socket, threading, struct, time
+import socket, threading, struct, time, os
 from .protocol.message_pb2 import CORMessage
 
 """
@@ -30,26 +30,54 @@ class NetworkAdapter:
 
 	# COR 5.0, direct message extension
 	def direct_message(self, message, url):
-		pass
+		message_type = type(message).__name__
+		cormsg = CORMessage()
+		cormsg.type = message_type
+		cormsg.data = message.SerializeToString()
+		sock = self.endpoints[url]
+		cordata = cormsg.SerializeToString()
+		corlength = struct.pack(">I", len(cordata))
+		try:
+			sock.send(corlength+cordata)
+		except Exception:
+			print("Unable to send direct message")
 
-	def _connect(self, hostport):
-		aparts = hostport.split(":")
-		if hostport in self.endpoints:
-			self.endpoints[hostport].close()
-		while True: 
-			try:
-				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-				sock.connect((aparts[0], int(aparts[1])))
-				if self.nodelay:
-					# Disables Nagle's Algorithm to reduce latency
-					sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-				self.endpoints[hostport] = sock
-				print("Connected to " + hostport)
-				break
-			except Exception as e:
-				print(e)
-				print("Connection to %s failed retrying" % hostport)
-				time.sleep(1)
+	def _connect(self, url):
+		if url.startswith("sock://"):
+			aparts = url[len("sock://"):]
+			if url in self.endpoints:
+				self.endpoints[url].close()
+			while True:
+				try:
+					sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+					sock.connect((aparts))
+					self.endpoints[url] = sock
+					print("Connected to " + url)
+					break
+				except Exception as e:
+					print(e)
+					print("Connection to %s failed retrying" % url)
+					time.sleep(1)
+		elif url.startswith("tcp://"):
+			aparts = url[len("tcp://"):].split(":")
+			if url in self.endpoints:
+				self.endpoints[url].close()
+			while True:
+				try:
+					sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+					sock.connect((aparts[0], int(aparts[1])))
+					if self.nodelay:
+						# Disables Nagle's Algorithm to reduce latency
+						sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+					self.endpoints[url] = sock
+					print("Connected to " + url)
+					break
+				except Exception as e:
+					print(e)
+					print("Connection to %s failed retrying" % url)
+					time.sleep(1)
+		else:
+			raise Exception("Unknown url type specified")
 
 	def register_link(self, atype, hostport):
 		if hostport not in self.endpoints:
@@ -107,8 +135,10 @@ class NetworkAdapter:
 
 		# domain socket
 		self.domain_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-		# allow to reuse the address (in case of server crash and quick restart)
-		self.domain_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		try:
+			os.unlink(local_socket)
+		except FileNotFoundError:
+			pass
 		self.domain_socket.bind((local_socket))
 		self.domain_thread = threading.Thread(target=self.server_thread, args=[self.domain_socket])
 		self.domain_thread.start()
