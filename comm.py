@@ -56,10 +56,10 @@ class NetworkAdapter:
 			self._connect(hostport)
 		self.routes[atype] = hostport
 
-	def server_thread(self):
-		self.server_socket.listen(10)
+	def server_thread(self, socket):
+		socket.listen(10)
 		while True:
-			conn, addr = self.server_socket.accept()
+			conn, addr = socket.accept()
 			clientt = threading.Thread(target=self.client_thread, args=(conn,))
 			clientt.start()
 
@@ -96,11 +96,22 @@ class NetworkAdapter:
 		self.endpoints = {}
 		self.module = module
 		self.routes = {}
-		self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		# tcp socket
+		self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		# allow to reuse the address (in case of server crash and quick restart)
-		self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		self.tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		aparts = bind_url.split(":")
-		self.server_socket.bind((aparts[0], int(aparts[1])))
-		self.sthread = threading.Thread(target=self.server_thread)
-		self.sthread.start()
+		self.tcp_socket.bind((aparts[0], int(aparts[1])))
+		self.tcp_thread = threading.Thread(target=self.server_thread, args=[self.tcp_socket])
+		self.tcp_thread.start()
+
+		# domain socket
+		self.domain_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+		# allow to reuse the address (in case of server crash and quick restart)
+		self.domain_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+		self.domain_socket.bind((local_socket))
+		self.domain_thread = threading.Thread(target=self.server_thread, args=[self.domain_socket])
+		self.domain_thread.start()
+
+
 

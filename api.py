@@ -2,6 +2,7 @@ import time
 import threading
 import sys
 from . import comm
+import protocol.lifecycle_pb2 as lifecycle
 
 __author__ = 'denislavrov'
 
@@ -15,10 +16,19 @@ class CORModule:
 		self.consumes = {}
 		self.types = {}
 		self.network_adapter = comm.NetworkAdapter(self, local_socket=local_socket, bind_url=bind_url)
+		self.register_topic("Connnection", lifecycle.Connection, self.on_connection_request)
+		self.register_topic("ModuleStart", lifecycle.ModuleStart, self.on_start)
+		self.register_topic("ModuleStop", lifecycle.ModuleStop, self.on_stop)
+		self.register_topic("ModuleRecover", lifecycle.ModuleRecover, self.on_recover)
+		self.register_topic("ModuleParameters", lifecycle.ModuleParameters, self.on_parameters_received)
 		print("Initializaing %s" % type(self).__name__)
 
 	def add_topic(self, type, callback):
 		self.consumes[type] = callback
+
+	def register_topic(self, type, type_class, callback):
+		self.register_type(type, type_class)
+		self.add_topic(type, callback)
 
 	def on_parameters_received(self, message):
 		pass
