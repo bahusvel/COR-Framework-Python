@@ -3,7 +3,7 @@ import threading
 import struct
 import time
 import os
-import cor.protocol.message_pb2 as message
+import cor.protocol.message_pb2 as message_proto
 
 __author__ = 'denis'
 
@@ -16,7 +16,7 @@ class NetworkAdapter:
 
 	def message_out(self, message):
 		message_type = type(message).__name__
-		cormsg = message.CORMessage()
+		cormsg = message_proto.CORMessage()
 		cormsg.type = message_type
 		cormsg.data = message.SerializeToString()
 		if message_type in self.routes:
@@ -37,7 +37,7 @@ class NetworkAdapter:
 	# COR 5.0, direct message extension
 	def direct_message(self, message, url):
 		message_type = type(message).__name__
-		cormsg = message.CORMessage()
+		cormsg = message_proto.CORMessage()
 		cormsg.type = message_type
 		cormsg.data = message.SerializeToString()
 		sock = self.endpoints[url]
@@ -108,7 +108,7 @@ class NetworkAdapter:
 			while len(fullmessage) < msglen:
 				rcv_buf_size = 8192 if (msglen - len(fullmessage)) > 8192 else (msglen - len(fullmessage))
 				fullmessage += conn.recv(rcv_buf_size)
-			cormsg = message.CORMessage()
+			cormsg = message_proto.CORMessage()
 			try:
 				cormsg.ParseFromString(fullmessage)
 				#print("Received: " + cormsg.type)
