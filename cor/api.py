@@ -1,9 +1,9 @@
-import time
-import threading
 import sys
-from . import comm
-from .protocol import lifecycle_pb2 as lifecycle
-from .protocol import log_pb2 as log
+import threading
+
+import cor.comm as comm
+import cor.protocol.lifecycle_pb2 as lifecycle
+import cor.protocol.log_pb2 as log
 
 __author__ = 'denislavrov'
 
