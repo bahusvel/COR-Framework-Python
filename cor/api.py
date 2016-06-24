@@ -1,5 +1,5 @@
 import sys
-import threading
+import time
 
 import cor.comm as comm
 import cor.protocol.lifecycle_pb2 as lifecycle
@@ -77,8 +77,8 @@ class CORModule:
 def launch_module(module_class):
 	local_socket = sys.argv[1]
 	bind_url = sys.argv[2]
-
-	def mod_loader():
-		smodule_instance = module_class(local_socket, bind_url)
-	module_thread = threading.Thread(target=mod_loader)
-	module_thread.start()
+	module_instance = module_class(local_socket, bind_url)
+	tcp_thread = module_instance.network_adapter.tcp_thread
+	domain_thread = module_instance.network_adapter.domain_thread
+	while tcp_thread.is_alive() and domain_thread.is_alive():
+		time.sleep(0.1)
