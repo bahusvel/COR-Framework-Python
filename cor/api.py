@@ -13,7 +13,7 @@ If you want to port COR-Module to another language, you must implement everythin
 
 
 class CORModule:
-	def __init__(self, local_socket, bind_url):
+	def __init__(self, local_socket=None, bind_url=None):
 		self.consumes = {}
 		self.types = {}
 		self.network_adapter = comm.NetworkAdapter(self, local_socket=local_socket, bind_url=bind_url)
@@ -78,7 +78,3 @@ def launch_module(module_class):
 	local_socket = sys.argv[1]
 	bind_url = sys.argv[2]
 	module_instance = module_class(local_socket, bind_url)
-	tcp_thread = module_instance.network_adapter.tcp_thread
-	domain_thread = module_instance.network_adapter.domain_thread
-	while tcp_thread.is_alive() and domain_thread.is_alive():
-		time.sleep(0.1)

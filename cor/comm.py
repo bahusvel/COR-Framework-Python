@@ -101,7 +101,7 @@ class NetworkAdapter:
 		while True:
 			lenbuf = conn.recv(4)
 			if not lenbuf:
-				time.sleep(0.0001)
+				time.sleep(0.001)
 				continue
 			msglen = struct.unpack(">I", lenbuf)[0]
 			fullmessage = b""
@@ -124,30 +124,32 @@ class NetworkAdapter:
 			else:
 				print("Type " + cormsg.type + " is not declared to be received")
 
-	def __init__(self, module, local_socket="", bind_url="127.0.0.1:6090", nodelay=True):
+	def __init__(self, module, local_socket=None, bind_url=None, nodelay=True):
 		super().__init__()
 		self.nodelay = nodelay
 		self.endpoints = {}
 		self.module = module
 		self.routes = {}
-		# tcp socket
-		self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		# allow to reuse the address (in case of server crash and quick restart)
-		self.tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		aparts = bind_url.split(":")
-		self.tcp_socket.bind((aparts[0], int(aparts[1])))
-		self.tcp_thread = threading.Thread(target=self.server_thread, args=[self.tcp_socket])
-		self.tcp_thread.start()
+		if bind_url is not None:
+			# tcp socket
+			self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			# allow to reuse the address (in case of server crash and quick restart)
+			self.tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+			aparts = bind_url.split(":")
+			self.tcp_socket.bind((aparts[0], int(aparts[1])))
+			self.tcp_thread = threading.Thread(target=self.server_thread, args=[self.tcp_socket])
+			self.tcp_thread.start()
 
-		# domain socket
-		self.domain_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-		try:
-			os.unlink(local_socket)
-		except FileNotFoundError:
-			pass
-		self.domain_socket.bind((local_socket))
-		self.domain_thread = threading.Thread(target=self.server_thread, args=[self.domain_socket])
-		self.domain_thread.start()
+		if local_socket is not None:
+			# domain socket
+			self.domain_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+			try:
+				os.unlink(local_socket)
+			except FileNotFoundError:
+				pass
+			self.domain_socket.bind((local_socket))
+			self.domain_thread = threading.Thread(target=self.server_thread, args=[self.domain_socket])
+			self.domain_thread.start()
 
 
 
